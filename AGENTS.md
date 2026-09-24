@@ -1,41 +1,114 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+# MusicDiscovery 開発方針
 
-## Expo has changed — do not trust your training data
+## アプリの目的と開発範囲
 
-Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
+「今聴いている曲から、ストリーミングサービスだけでは分からない音楽情報を深掘りできる」iOS向け音楽ディスカバリーアプリを作る。
 
-1. Read the major version of the `expo` package in `package.json`.
-2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
-3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
+曲を起点に、アーティスト、制作クレジット、リリース、制作背景、サンプリング、音楽シーン、関連作品へたどれる体験を目指す。最初からすべて実装せず、MVPから段階的に進める。
 
-## Commands
+- 初期案は、曲検索 → 曲詳細・取得可能なクレジット → 関連人物・作品、お気に入りの端末内保存。
+- 再生中の曲の自動取得、認証、バックエンド、DB、サンプリング情報は、必要性と取得可能性を確認してから追加する。
+- APIの採用や未確定の仕様を既成事実にしない。仮定と未確認事項を明記する。
+- 情報不足を推測で埋めず、音楽情報の出典を確認できる設計にする。
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+## 技術スタックと開発環境
 
-```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
-```
+- Expo、React Native、TypeScript（strict）、Expo Routerを維持する。
+- SDKやライブラリのバージョンは `package.json` とロックファイルを正とする。現在はExpo SDK 57系。
+- iOSを第一ターゲット、Windowsを主な開発環境とする。iPhone実機とEAS Buildを活用し、Mac / Xcodeは必要な場合に使う。
+- Expoの設定とconfig pluginで管理する構成（CNG）を優先する。生成されていない `ios/`・`android/` を手作業で追加しない。
+- Expo Goに含まれないネイティブ機能にはdevelopment buildを使う。development buildへの移行とExpo管理構成の放棄を混同しない。
+- Expo / React Native / EASのAPIを変更するときは、導入済みバージョンに対応する公式ドキュメントを確認する。
+  - SDK: https://docs.expo.dev/versions/v57.0.0/ （SDK更新時は対応版を参照）
+  - ドキュメント索引: https://docs.expo.dev/llms.txt
 
-Run lint and typecheck before declaring any task done.
+## ディレクトリ構成
 
-## Navigation & Routing
+既存構成を活かし、必要なファイルだけを追加する。将来のためだけの空フォルダーや抽象化は作らない。
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+- `src/app/`: Expo Routerの画面とレイアウト。
+- `src/components/`: 再利用するUI。必要になったら `ui/` と `music/` に分ける。
+- `src/hooks/`: 再利用するReactフック。
+- `src/constants/`: 色、余白などの共通定義。
+- `src/types/`: アプリ内の音楽データなどの共有型。
+- `src/services/`: API通信、外部データの検証とアプリ内形式への変換。
+- `src/storage/`: お気に入りなどの永続化処理。
+- `src/data/`: 開発用のモックデータ。実データと区別する。
+- `assets/`: 画像・アイコンなど。
 
-## Building with EAS
+画面は表示と操作の組み立てを担い、通信や保存の詳細は画面の外へ置く。バックエンドが必要になった場合も、秘密を扱うサーバー処理をモバイル用コードから分離する。
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
+## TypeScriptと命名
 
-## Rules
+- strict設定を維持する。Props、共有モデル、API境界の型を明確にする。
+- `any`、不要な型アサーション、非nullアサーションでエラーを隠さない。未検証の外部データは `unknown` として検証する。
+- 型が自然に推論できるローカル変数に冗長な型注釈を付けない。
+- 欠損値を型で表現し、「情報なし」「取得失敗」「未取得」を必要に応じて区別する。
+- 型だけのimportは `import type` を使う。内部参照は既存の `@/` エイリアスを活用する。
+- コンポーネント・型はPascalCase、変数・関数はcamelCase、フックは `use` で始める。
+- 通常のファイル名は既存に合わせてkebab-case（例: `track-card.tsx`、`use-track.ts`）。ルートはRouterの命名規則を優先する。
+- 識別子は意味が分かる英語を使い、UI文言は当面日本語を基本とする。
+- 既存の書式に合わせ、無関係なファイルの一括整形をしない。
 
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
-- Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+## コンポーネント設計
+
+- 関数コンポーネントとHooksを使い、1つのコンポーネントに責務を詰め込みすぎない。
+- 小さな画面は無理に分割せず、再利用や読みやすさに効果がある部分を切り出す。
+- 既存のテーマ対応コンポーネントと色・余白の定義を活用する。
+- セーフエリア、スクロール、大きな文字サイズ、ライト／ダークモード、操作要素のアクセシビリティを考慮する。
+- 状態は必要な範囲に置き、まずReactのstateやContextで対応する。必要性のない全体状態管理を導入しない。
+
+## Expo Router
+
+- 画面遷移はExpo Routerに統一する。別のナビゲーション構成を重ねない。
+- `src/app/` にユーティリティや通常のUI部品を置かない。
+- `_layout.tsx` はナビゲーターやProviderの構成に使う。
+- 必要に応じて `(tabs)/`、`tracks/[id].tsx`、`artists/[id].tsx` を追加する。先に全画面を作る必要はない。
+- `Link`、`router`、`useLocalSearchParams` は `expo-router` から利用し、型付きルートを維持する。
+- ルートには安定したIDを渡す。大きなデータや秘密情報をパラメーターに入れず、受け取った値を検証する。
+- ネイティブとWebのタブ実装が分かれているため、ルート変更時は両方の参照を確認する。
+
+## API通信と音楽データ
+
+- 画面から外部APIを直接呼ばず、`services` の関数を介する。まず標準の `fetch` を使う。
+- 外部APIのレスポンス型とアプリ内の型を分け、境界で必要なフィールドを検証・変換する。
+- 曲名をIDとして扱わない。録音、作詞・作曲の対象作品、リリースの違いを意識し、外部サービスのIDを区別する。
+- クレジットや関係情報は出典URL・外部IDを保持できる形にする。APIの欠損を「該当なし」と断定しない。
+- 採用前に対象曲の収録率、認証、利用規約、表示・保存条件、レート制限を確認する。
+- 通信にはタイムアウトやキャンセルを考慮し、古い検索結果で新しい結果を上書きしない。
+- キャッシュ、再試行、サーバー経由の取得は必要に応じて導入する。大量の並列取得や無制限の自動再試行を避ける。
+- 再生中の曲を全サービスから共通に取得できると仮定しない。サービスごとの制約を検証する。
+
+## 環境変数と秘密情報
+
+- APIキー、秘密鍵、クライアントシークレット、トークンをソース、モック、ログへ直接書かない。
+- `EXPO_PUBLIC_*` はアプリに埋め込まれる公開情報。APIの公開URLなどに限定する。
+- `.env` やEASの環境変数に置いても、クライアントに埋め込めば秘密にはならない。秘密を必要とする処理はサーバー側に置く。
+- ユーザートークンの保存にはSecureStoreなど適切な仕組みを使い、お気に入り用ストレージと分ける。
+- 環境変数を導入するときは、実値のファイルがGit対象外であることを確認する。共有用の例にはダミー値のみを記載する。
+
+## エラーハンドリング
+
+- 読み込み中、結果なし、情報不足、通信失敗を分け、ユーザーに理解できる文言を表示する。
+- エラーを握りつぶしたり、失敗を空配列やモックデータで成功に見せたりしない。
+- 必要な場所に再試行操作を用意する。認証失敗、レート制限、一時的な通信障害を区別する。
+- 画面には内部例外や秘密を表示しない。開発ログにもトークンや個人情報を残さない。
+
+## 変更範囲と依存関係
+
+- 個人開発で維持できる、シンプルで小さな変更を優先する。
+- 既存のユーザー変更を上書き・巻き戻ししない。作業前後に差分を確認する。
+- 依頼に含まれない大規模リファクタリング、SDK更新、画面・機能の削除、構成の全面変更を独断で行わない。必要なら理由と影響を説明する。
+- 依存関係は既存機能や標準APIで不足する場合だけ追加する。追加理由とSDK互換性を確認し、Expoモジュールを優先する。
+- パッケージ追加は原則 `npx expo install <package>` を使う。現在のnpmとロックファイルを維持する。
+- 未使用に見える依存関係も、参照・peer dependency・設定上の用途を確認してから削除する。
+- `reset-project` は通常の整理や開発で実行しない。
+
+## 変更後の確認
+
+- アプリのコード・設定・依存関係を変更したら `npx tsc --noEmit` と `npm run lint` を実行する。
+- チェックが未設定または実行不能なら、成功と報告せず理由を明記する。作業範囲外のインストールや設定変更を自動で行わない。
+- ドキュメントのみの変更は内容と差分の確認でよく、型チェックやlintは省略できる。
+- UI・遷移の変更は可能な範囲でiPhone実機でも確認し、未確認なら明記する。Web表示だけでiOS確認済みとしない。
+- テストはデータ変換、保存、エラー処理など壊れると困る振る舞いを優先し、変更に見合う範囲で追加・実行する。
+- 完了時は変更内容、確認結果、未確認事項を簡潔に報告する。
