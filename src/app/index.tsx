@@ -1,61 +1,49 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
 
 export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <ThemedView style={styles.header}>
+            <ThemedText type="small" themeColor="textSecondary">
+              Music Discovery
+            </ThemedText>
+            <ThemedText type="title" accessibilityRole="header" style={styles.title}>
+              ホーム
+            </ThemedText>
+            <ThemedText themeColor="textSecondary">
+              新しい音楽と出会う、あなただけの場所。
+            </ThemedText>
+          </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+          <ThemedView type="backgroundElement" style={styles.welcomeCard}>
+            <ThemedText style={styles.musicNote} accessible={false}>♪</ThemedText>
+            <ThemedText accessibilityRole="header" style={styles.sectionTitle}>
+              今日も、音楽と一緒に。
+            </ThemedText>
+            <ThemedText themeColor="textSecondary">
+              心に響く一曲を見つけて、お気に入りを少しずつ集めよう。
+            </ThemedText>
+          </ThemedView>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
+          <ThemedView style={styles.favorites}>
+            <ThemedText accessibilityRole="header" style={styles.sectionTitle}>
+              お気に入り
+            </ThemedText>
+            <ThemedView type="backgroundElement" style={styles.emptyState}>
+              <ThemedText>まだお気に入りの曲はありません</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                ここに、あなたの好きな音楽が並びます。
+              </ThemedText>
+            </ThemedView>
+          </ThemedView>
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -64,35 +52,47 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    alignItems: 'center',
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    width: '100%',
     maxWidth: MaxContentWidth,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
+  content: {
     paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    paddingTop: Spacing.five,
+    paddingBottom: BottomTabInset + Spacing.five,
+    gap: Spacing.five,
+  },
+  header: {
+    gap: Spacing.two,
   },
   title: {
-    textAlign: 'center',
+    fontSize: 34,
+    lineHeight: 44,
   },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
+  welcomeCard: {
+    padding: Spacing.four,
     borderRadius: Spacing.four,
+    gap: Spacing.three,
+  },
+  musicNote: {
+    fontSize: 48,
+    lineHeight: 56,
+    color: '#C04B69',
+  },
+  sectionTitle: {
+    fontSize: 22,
+    lineHeight: 32,
+    fontWeight: '600',
+  },
+  favorites: {
+    gap: Spacing.three,
+  },
+  emptyState: {
+    padding: Spacing.four,
+    borderRadius: Spacing.three,
+    gap: Spacing.two,
   },
 });
